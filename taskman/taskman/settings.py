@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -130,3 +131,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Use BS4 for crispy css backend
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
+
+# URL to redirect on successful login
+LOGIN_REDIRECT_URL = 'profile'
+# URL to redirect failing is authenticated
+# check on login required view
+LOGIN_URL = 'login'
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
+MEDIA_URL = 'media/' 
