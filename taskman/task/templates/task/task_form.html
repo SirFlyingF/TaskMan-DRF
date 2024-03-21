@@ -1,0 +1,22 @@
+{% extends "task/base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+    <div class="content-section">
+        <div class="media-body">
+            <h2 class="article-title">{{ object.title }}</h2>
+        </div>
+        <div class="article-metadata">
+            <a class="mr-2" href="{% url 'profile' %}">{{ object.user }}</a>
+            <small class="text-muted">{{ object.created_at|date:"F d, Y" }}</small>
+        </div>
+        <form method="POST">
+            {% csrf_token %}
+            <fieldset class="form-group">
+                {{ form|crispy }}
+            </fieldset>
+            <div class="form-group">
+                <button class="btn btn-outline-info" type="submit">Post</button>
+            </div>
+        </form>
+    </div>
+{% endblock content %}
