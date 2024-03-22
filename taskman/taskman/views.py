@@ -1,6 +1,7 @@
-from django.shortcuts import redirect, render, HttpResponse
+from django.shortcuts import redirect, render, HttpResponse, Http404
 from django.http import FileResponse
 import os
+from django.conf import settings
 
 def landing_view(request):
     if not request.user or not request.user.is_authenticated:
@@ -9,12 +10,10 @@ def landing_view(request):
         return redirect('task-home')
     
 
-def serve_media(request, path):
-    try:
-        print (path)
-        with open(path, 'rb') as f:
-            respons = FileResponse(f, content_type='image/jpeg')
-            respons['Content-Disposition'] = f'inline; filename="{os.path.basename(path)}"'
-        return respons
-    except Exception as e:
-        print(e)
+# def serve_media(request, path):
+#     file_path = os.path.join(settings.MEDIA_ROOT, path)
+#     if os.path.exists(file_path):
+#         with open(file_path, 'rb') as file:
+#             return HttpResponse(file.read(), content_type="image/jpeg")
+#     else:
+#         raise Http404("Image does not exist")
