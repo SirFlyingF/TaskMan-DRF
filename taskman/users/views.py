@@ -1,10 +1,10 @@
 from django.shortcuts import render
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
 from django.shortcuts import redirect
-from .models import UserProfile
+from django.contrib import auth
+from django.contrib.auth.decorators import login_required
 from .forms import UserRegisterForm, UserUpdateForm, UserProfileUpdateForm
+
 
 
 # Create your views here.
@@ -23,7 +23,15 @@ def register(request):
         form = UserRegisterForm()
     
     return render(request, "users/register.html", {"form":form})
-        
+
+
+@login_required
+def logout_view(request):
+    # LogoutView class has been deprecated in django5.
+    # Hence used a logout function view
+    auth.logout(request)
+    return render(request, 'users/logout.html', {})
+       
 
 @login_required
 def profile(request):

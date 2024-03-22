@@ -6,13 +6,15 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 # Create your views here.
 
 
-class TaskListView(ListView):
+class TaskListView(LoginRequiredMixin, ListView):
     model = Task
     template_name = 'task/home.html'
     context_object_name = 'tasks'
+    ordering = ['created_at']
+    paginate_by = 2
 
 
-class TaskDetailView(DetailView):
+class TaskDetailView(LoginRequiredMixin, DetailView):
     model = Task
     template_name = 'task/detail.html'
 
@@ -31,7 +33,7 @@ class TaskUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
 class TaskDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Task
-    success_url = '/home/'
+    success_url = '/task/home/'
 
     def test_func(self):
         ''' the test that UserPassesTestMixin calls'''

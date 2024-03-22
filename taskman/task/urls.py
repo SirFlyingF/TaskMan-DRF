@@ -3,8 +3,8 @@ from .views import TaskListView, TaskDetailView, TaskUpdateView, TaskDeleteView,
 
 urlpatterns = [
     path('home/', TaskListView.as_view(), name='task-home'),
-    path('task/<int:pk>', TaskDetailView.as_view(), name='task-detail'),
-    path('task/update/<int:pk>', TaskUpdateView.as_view(), name='task-update'),
-    path('task/delete/<int:pk>', TaskDeleteView.as_view(), name='task-delete'),
-    path('task/create/', TaskCreateView.as_view(), name='task-create')
+    path('<int:pk>', TaskDetailView.as_view(), name='task-detail'),
+    path('update/<int:pk>', TaskUpdateView.as_view(), name='task-update'),
+    path('delete/<int:pk>', TaskDeleteView.as_view(), name='task-delete'),
+    path('create/', TaskCreateView.as_view(), name='task-create')
 ]
