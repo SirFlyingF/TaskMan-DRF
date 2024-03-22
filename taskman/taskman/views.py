@@ -11,9 +11,10 @@ def landing_view(request):
 
 def serve_media(request, path):
     try:
+        print (path)
         with open(path, 'rb') as f:
-            respons = FileResponse(f, content_type='application/octet-stream')
-            respons['Content-Disposition'] = f'attachment; filename="{os.path.basename(path)}"'
+            respons = FileResponse(f, content_type='image/jpeg')
+            respons['Content-Disposition'] = f'inline; filename="{os.path.basename(path)}"'
         return respons
     except Exception as e:
         print(e)
