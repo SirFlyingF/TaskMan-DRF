@@ -16,11 +16,14 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from .views import landing_view
+from .views import landing_view, serve_media
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', landing_view, name='landing'),
     path('task/', include('task.urls')),
     path('users/', include('users.urls')),
+
+    path('media/<path:path>', serve_media, name='serve_media'),
 ]
+
