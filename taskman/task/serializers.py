@@ -34,7 +34,7 @@ class TaskDestroySerializer(ModelSerializer):
 class TaskSerializer(ModelSerializer):
     title = CharField(read_only=True)
     created_at = DateTimeField(read_only=True)
-    user = UserSerializer(read_only=True)
+    user = PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = Task

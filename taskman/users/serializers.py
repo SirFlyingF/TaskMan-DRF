@@ -9,13 +9,26 @@ class LoginSerializer(Serializer):
 
 
 class RegisterSerializer(ModelSerializer):
-    email = EmailField()
-    password1 = CharField(min_length=8)
-    password2 = CharField(min_length=8)
+    email = EmailField(required=True)
+    username = CharField(required=True)
+    password1 = CharField(min_length=8, required=True)
+    password2 = CharField(min_length=8, required=True)
+
 
     class Meta:
         model = User
         fields = ['username', 'email', 'password1', 'password2']
+
+
+class PasswordResetRequestSerializer(Serializer):
+    username = CharField(required=True)
+
+
+class PasswordResetCompleteSerializer(Serializer):
+    password1 = CharField(min_length=8)
+    password2 = CharField(min_length=8)
+    
+
 
 
 
