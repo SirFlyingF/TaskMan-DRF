@@ -1,6 +1,5 @@
 from rest_framework.serializers import ModelSerializer, Serializer
 from rest_framework.fields import EmailField, CharField
-from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
     
 
