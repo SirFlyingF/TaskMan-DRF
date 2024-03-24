@@ -1,25 +1,10 @@
-from django.urls import path, include
-from django.contrib.auth.views import (
-        LoginView,
-        PasswordResetView,
-        PasswordResetDoneView,
-        PasswordResetConfirmView,
-        PasswordResetCompleteView
-    )
-from .views import *
-from django.conf import settings
-from django.conf.urls.static import static
+from django.urls import path
+from rest_framework_simplejwt.views import TokenRefreshView
+from .views import LoginView, RegisterView, LogoutView
 
 urlpatterns = [
-    path('register/', register, name='register'),
-    path('login/', LoginView.as_view(template_name='users/login.html'), name='login'),
-    path('logout/', logout_view, name='logout'),
-    path('profile/', profile, name='profile'),
-    path('password-reset/', PasswordResetView.as_view(template_name='users/password_reset.html'), name='password_reset'),
-    path('password-reset/done/', PasswordResetDoneView.as_view(template_name='users/password_reset_done.html'), name='password_reset_done'),
-    path('password-reset-confirm/<uidb64>/<token>', PasswordResetConfirmView.as_view(template_name='users/password_reset_confirm.html'), name='password_reset_confirm'),
-    path('password-reset-complete/', PasswordResetCompleteView.as_view(template_name='users/password_reset_complete.html'), name='password_reset_complete')
+    path('api/token-refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/login/', LoginView.as_view(), name='login'),
+    path('api/register/', RegisterView.as_view(), name='register'),
+    path('api/logout/', LogoutView.as_view(), name='logout'),
 ]
-
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) 
