@@ -8,10 +8,17 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.contrib.sites.shortcuts import get_current_site
 from django.urls import reverse
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.utils.encoding import smart_bytes
+from django.utils.encoding import smart_bytes, smart_str
 from django.core.mail import EmailMessage
+from django.shortcuts import redirect
+import six
 from taskman import settings
-from .serializers import LoginSerializer, RegisterSerializer, PasswordResetCompleteSerializer, PasswordResetRequestSerializer
+from .serializers import (
+    LoginSerializer,
+    RegisterSerializer,
+    PasswordResetConfirmSerializer,
+    PasswordResetRequestSerializer
+)
 
 # Create your views here.
 
@@ -63,11 +70,6 @@ class RegisterView(APIView):
                    
 
 class LogoutView(APIView):
-    # Not sure why but need to override auth classes to prevent Unauthenticated error
-    # Perhaps because settings have Authentication classes defined but shouldnt that be a
-    # permission_classes = [isAuthenticated] ?
-    authentication_classes = []
-
     def post(self, request, *args, **kwargs):
         refresh_token = request.headers.get('Authorization', '').split(' ')[1]
 
@@ -85,6 +87,7 @@ class LogoutView(APIView):
 
 class PasswordResetRequestView(APIView):
     serializer_class = PasswordResetRequestSerializer
+    authentication_classes = [] # Override to not expect an access token
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
@@ -95,7 +98,7 @@ class PasswordResetRequestView(APIView):
         if not User.objects.filter(username=username).exists():
             return Response({"msg":"User does not exist"}, status=status.HTTP_404_NOT_FOUND)
         
-        uzr = User.objects.filter(username=username)
+        uzr = User.objects.filter(username=username).first()
         if not uzr.email:
             # This should not be hit if email is a required field.
             # Ideally email should be set to AUTH_USERNAME_FIELD
@@ -105,27 +108,81 @@ class PasswordResetRequestView(APIView):
         token = PasswordResetTokenGenerator().make_token(uzr)
 
         current_site = get_current_site(request=request).domain
-        relativeLink = reverse('password-reset-verify', kwargs={'uidb64': uidb64, 'token': token})
+        relative_link = reverse('password-reset-verify', kwargs={'uidb64': uidb64, 'token': token})
         
-        absurl = 'http://'+current_site+relativeLink
+        absurl = 'http://'+current_site+relative_link
 
-        frm = settings.EMAIL_HOST_USER
-        to = uzr.email
-        subject ='Reset your passsword'
-        message =   'Hello,'                                  +'\n'+\
-                    'Use link below to reset your password.'  +'\n'+\
-                        absurl                                   +'\n'+\
-                                                            +'\n'+\
-                    'Regards'
+        frm =      settings.EMAIL_HOST_USER
+        to =       [uzr.email]
+        subject = 'Reset your passsword'
+        message = 'Hello, ' + uzr.username                  +'\n'+\
+                                                             '\n'+\
+                  'Use link below to reset your password.'  +'\n'+\
+                   absurl                                   +'\n'+\
+                                                             '\n'+\
+                  'Regards'
 
         try:   
             email = EmailMessage(subject, message, frm, to)
             email.send()
         except Exception as e:
-            return Response({}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"msg" : str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response({"msg" : "Success!"}, status=status.HTTP_200_OK)
     
 
 class PasswordResetVerifyView(APIView):
-    def get(self, request):
-        pass
+    authentication_classes = []
+
+    def get(self, request, uidb64, token, *args, **kwargs):
+        try:
+            id = smart_str(urlsafe_base64_decode(uidb64))
+
+            uzr = User.objects.get(id=id)
+            if not PasswordResetTokenGenerator().check_token(uzr, token):
+                raise KeyError  # Will be caught with a relevant message
+
+            # Redirect tp FrontEnd_PasswordReset_URL for React/Angular front end
+            # fe_pr_url = settings.FRONTEND_URL + f'/password-reset-confirm/?token={token}&uidb64={uidb64}'
+            # return redirect(fe_pr_url)
+            return Response({"msg" : "success"}, status=status.HTTP_200_OK)
+        
+        except KeyError as ke:
+            return Response({'msg' : "This is not the link you are looking for"}, status=status.HTTP_403_FORBIDDEN)
+        except User.DoesNotExist as e_404:
+            return Response({"msg":"User does not exist"}, status=status.HTTP_404_NOT_FOUND)
+        except AssertionError:
+            return Response({"msg":"User does not exist"}, status=status.HTTP_404_NOT_FOUND)
+        
+
+class PasswordResetConfirmView(APIView):
+    authentication_classes = []
+
+    serializer_class = PasswordResetConfirmSerializer
+
+    def patch(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        if not serializer.is_valid():
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        
+        password1 = serializer.validated_data.get('password1')
+        password2 = serializer.validated_data.get('password2')
+        token = request.GET.get('token')
+        id = smart_str(urlsafe_base64_decode(request.GET.get('uidb64')))
+
+        try:
+            uzr = User.objects.get(id=id)
+            if not uzr:
+                return Response({"msg":"User does not exist"}, status=status.HTTP_404_NOT_FOUND)
+            
+            if not PasswordResetTokenGenerator().check_token(uzr, token):
+                return Response({'msg' : "This is not the link you are looking for"}, status=status.HTTP_403_FORBIDDEN)
+
+            if not password1 == password2:
+                return Response({'msg' : "Password1 and Password2 did not match"}, status=status.HTTP_400_BAD_REQUEST)
+        
+            uzr.set_password(password1)
+            uzr.save()
+        except Exception:
+            return Response({}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response({'msg' : "Success!"}, status=status.HTTP_201_CREATED)

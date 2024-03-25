@@ -24,9 +24,10 @@ class PasswordResetRequestSerializer(Serializer):
     username = CharField(required=True)
 
 
-class PasswordResetCompleteSerializer(Serializer):
+class PasswordResetConfirmSerializer(Serializer):
     password1 = CharField(min_length=8)
     password2 = CharField(min_length=8)
+
     
 
 
