@@ -29,6 +29,8 @@ class PasswordResetConfirmSerializer(Serializer):
     password2 = CharField(min_length=8)
 
     
+class LogoutSerializer(Serializer):
+    refresh = CharField()
 
 
 

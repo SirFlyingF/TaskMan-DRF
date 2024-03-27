@@ -11,13 +11,13 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import smart_bytes, smart_str
 from django.core.mail import EmailMessage
 from django.shortcuts import redirect
-import six
 from taskman import settings
 from .serializers import (
     LoginSerializer,
     RegisterSerializer,
     PasswordResetConfirmSerializer,
-    PasswordResetRequestSerializer
+    PasswordResetRequestSerializer,
+    LogoutSerializer
 )
 
 # Create your views here.
@@ -39,7 +39,7 @@ class LoginView(APIView):
         
         user = auth.authenticate(request, username=username, password=password)
         if not user:
-            return Response({"msg":"Invalid email or password"}, status=status.HTTP_200_OK)
+            return Response({"msg":"Invalid username or password"}, status=status.HTTP_200_OK)
         
         refresh = RefreshToken.for_user(user)
         return Response({'refresh': str(refresh), 'access': str(refresh.access_token),}, status=status.HTTP_200_OK)
@@ -70,12 +70,13 @@ class RegisterView(APIView):
                    
 
 class LogoutView(APIView):
+    serializer_class = LogoutSerializer
     def post(self, request, *args, **kwargs):
-        refresh_token = request.headers.get('Authorization', '').split(' ')[1]
-
-        if not refresh_token:
+        serializer = self.serializer_class(data=request.data)
+        if not serializer.is_valid():
             return Response({"msg": "No token in Authorization header"}, status=status.HTTP_400_BAD_REQUEST)
         
+        refresh_token = serializer.validated_data.get('refresh')
         try:
             RefreshToken(refresh_token).blacklist()
         except Exception as e:
@@ -124,10 +125,10 @@ class PasswordResetRequestView(APIView):
 
         try:   
             email = EmailMessage(subject, message, frm, to)
-            email.send()
+            # email.send()
         except Exception as e:
             return Response({"msg" : str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        return Response({"msg" : "Success!"}, status=status.HTTP_200_OK)
+        return Response({"msg" : "Success!", "uidb64":uidb64, "token":token}, status=status.HTTP_200_OK)
     
 
 class PasswordResetVerifyView(APIView):
